@@ -124,24 +124,24 @@ namespace __rb_tree
 
 		void FixInsert(Node *node)
 		{
-			Node *uncle;
-			while (node->parent->color == RED)
+			Node *parent = node->parent, *grandparent = parent->parent, *uncle;
+			while (parent->color == RED)
 			{
-				if (node->parent == node->parent->parent->right)
+				if (parent == grandparent->right)
 				{
-					uncle = node->parent->parent->left;
+					uncle = grandparent->left;
 					if (uncle->color == RED)
 					{
 						uncle->color = BLACK;
-						node->parent->color = BLACK;
-						node->parent->parent->color = RED;
-						node = node->parent->parent;
+						parent->color = BLACK;
+						grandparent->color = RED;
+						node = grandparent;
 					}
 					else
 					{
-						if (node == node->parent->left)
+						if (node == parent->left)
 						{
-							node = node->parent;
+							node = parent;
 							RotateRight(node);
 						}
 						node->parent->color = BLACK;
@@ -151,19 +151,19 @@ namespace __rb_tree
 				}
 				else
 				{
-					uncle = node->parent->parent->right;
+					uncle = grandparent->right;
 					if (uncle->color == RED)
 					{
 						uncle->color = BLACK;
-						node->parent->color = BLACK;
-						node->parent->parent->color = RED;
-						node = node->parent->parent;
+						parent->color = BLACK;
+						grandparent->color = RED;
+						node = grandparent;
 					}
 					else
 					{
-						if (node == node->parent->right)
+						if (node == parent->right)
 						{
-							node = node->parent;
+							node = parent;
 							RotateLeft(node);
 						}
 						node->parent->color = BLACK;
@@ -175,6 +175,8 @@ namespace __rb_tree
 				{
 					break;
 				}
+				parent = node->parent;
+				grandparent = parent->parent;
 			}
 			root->color = BLACK;
 		}
@@ -393,9 +395,8 @@ namespace __rb_tree
 					}
 				}
 				delete node;
-				return;
 			}
-			if (node->left == null || node->right == null)
+			else if (node->left == null || node->right == null)
 			{
 				if (node == root)
 				{
@@ -424,10 +425,12 @@ namespace __rb_tree
 						temp->color = BLACK;
 					}
 				}
-				return;
 			}
-			node->data = temp->data;
-			Delete(temp);
+			else
+			{
+				node->data = temp->data;
+				Delete(temp);
+			}
 		}
 
 		Node *Minimum(Node *node)
@@ -455,7 +458,7 @@ namespace __rb_tree
 				return Minimum(node->right);
 			}
 			Node *parent = node->parent;
-			while (parent != null && node == parent->right)
+			while (node == parent->right)
 			{
 				node = parent;
 				parent = parent->parent;
@@ -470,7 +473,7 @@ namespace __rb_tree
 				return Maximum(node->left);
 			}
 			Node *parent = node->parent;
-			while (parent != null && node == parent->left)
+			while (node == parent->left)
 			{
 				node = parent;
 				parent = parent->parent;
