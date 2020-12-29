@@ -50,75 +50,75 @@ namespace __rb_tree
 
 		Node *Search(size_t pos)
 		{
-			Node *temp = root;
-			size_t idx = temp->left->size + 1;
+			Node *node = root;
+			size_t idx = node->left->size + 1;
 			while (idx != pos)
 			{
 				if (pos < idx)
 				{
-					temp = temp->left;
+					node = node->left;
 				}
 				else
 				{
 					pos -= idx;
-					temp = temp->right;
+					node = node->right;
 				}
-				idx = temp->left->size + 1;
+				idx = node->left->size + 1;
 			}
-			return temp;
+			return node;
 		}
 
 		void RotateLeft(Node *node)
 		{
-			Node *parent = node->right;
-			node->right = parent->left;
-			if (parent->left != null)
+			Node *right = node->right;
+			node->right = right->left;
+			if (right->left != null)
 			{
-				parent->left->parent = node;
+				right->left->parent = node;
 			}
-			parent->parent = node->parent;
-			if (node->parent == NULL)
+			right->parent = node->parent;
+			if (node == root)
 			{
-				root = parent;
+				root = right;
 			}
 			else if (node == node->parent->left)
 			{
-				node->parent->left = parent;
+				node->parent->left = right;
 			}
 			else
 			{
-				node->parent->right = parent;
+				node->parent->right = right;
 			}
-			parent->left = node;
-			node->parent = parent;
-			parent->size = node->size;
+			right->left = node;
+			node->parent = right;
+			right->size = node->size;
 			node->size = node->left->size + node->right->size + 1;
 		}
 
 		void RotateRight(Node *node)
 		{
-			Node *parent = node->left;
-			node->left = parent->right;
-			if (parent->right != null)
+			Node *left = node->left;
+			node->left = left->right;
+			if (left->right != null)
 			{
-				parent->right->parent = node;
+				left->right->parent = node;
 			}
-			parent->parent = node->parent;
-			if (node->parent == NULL)
+			left->parent = node->parent;
+			if (node == root)
 			{
-				root = parent;
+				root = left;
 			}
 			else if (node == node->parent->right)
 			{
-				node->parent->right = parent;
+				node->parent->right = left;
 			}
 			else
 			{
-				node->parent->left = parent;
+				node->parent->left = left;
 			}
-			parent->right = node;
-			node->parent = parent;
-			parent->size = node->size;
+			left->right = node;
+			node->parent = left;
+			left->size = node->size;
 			node->size = node->left->size + node->right->size + 1;
 		}
 
@@ -183,7 +183,7 @@ namespace __rb_tree
 
 		void Insert(size_t pos, T data)
 		{
-			Node *node = new Node{data, 1, RED, null, null, NULL}, *temp;
+			Node *node = new Node{data, 1, RED, null, null, NULL}, *parent;
 			if (root == null)
 			{
 				root = node;
@@ -192,57 +192,56 @@ namespace __rb_tree
 			}
 			else
 			{
+				parent = root;
 				if (pos == root->size + 1)
 				{
-					temp = root;
-					while (temp->right != null)
+					while (parent->right != null)
 					{
-						temp->size++;
-						temp = temp->right;
+						parent->size++;
+						parent = parent->right;
 					}
-					temp->size++;
-					temp->right = node;
-					node->parent = temp;
+					parent->size++;
+					parent->right = node;
+					node->parent = parent;
 				}
 				else
 				{
-					temp = root;
-					size_t idx = temp->left->size + 1;
+					size_t idx = parent->left->size + 1;
 					while (idx != pos)
 					{
-						temp->size++;
+						parent->size++;
 						if (pos < idx)
 						{
-							temp = temp->left;
+							parent = parent->left;
 						}
 						else
 						{
 							pos -= idx;
-							temp = temp->right;
+							parent = parent->right;
 						}
-						idx = temp->left->size + 1;
+						idx = parent->left->size + 1;
 					}
-					temp->size++;
-					if (temp->left == null)
+					parent->size++;
+					if (parent->left == null)
 					{
-						temp->left = node;
-						node->parent = temp;
+						parent->left = node;
+						node->parent = parent;
 					}
 					else
 					{
-						temp = temp->left;
-						while (temp->right != null)
+						parent = parent->left;
+						while (parent->right != null)
 						{
-							temp->size++;
-							temp = temp->right;
+							parent->size++;
+							parent = parent->right;
 						}
-						temp->size++;
-						temp->right = node;
-						node->parent = temp;
+						parent->size++;
+						parent->right = node;
+						node->parent = parent;
 					}
 				}
 			}
-			if (node->parent == root)
+			if (parent == root)
 			{
 				return;
 			}
@@ -252,25 +251,25 @@ namespace __rb_tree
 		Node *BSTReplace(Node *node)
 		{
 			node->size--;
-			if (node->left != null && node->right != null)
-			{
-				node = node->right;
-				while (node->left != null)
-				{
-					node->size--;
-					node = node->left;
-				}
-				return node;
-			}
-			if (node->left == null && node->right == null)
-			{
-				return null;
-			}
 			if (node->left != null)
 			{
+				if (node->right != null)
+				{
+					node = node->right;
+					while (node->left != null)
+					{
+						node->size--;
+						node = node->left;
+					}
+					return node;
+				}
 				return node->left;
 			}
-			return node->right;
+			if (node->right != null)
+			{
+				return node->right;
+			}
+			return null;
 		}
 
 		Node *Sibling(Node *node)
@@ -288,77 +287,77 @@ namespace __rb_tree
 
 		void FixDoubleBlack(Node *node)
 		{
-			if (node == root)
+			while (node != root)
 			{
-				return;
-			}
-			Node *parent = node->parent, *sibling = Sibling(node);
-			if (sibling == null)
-			{
-				FixDoubleBlack(parent);
-			}
-			else
-			{
-				if (sibling->color == RED)
+				Node *parent = node->parent, *sibling = Sibling(node);
+				if (sibling == null)
 				{
-					parent->color = RED;
-					sibling->color = BLACK;
-					if (sibling == parent->left)
-					{
-						RotateRight(parent);
-					}
-					else
-					{
-						RotateLeft(parent);
-					}
-					FixDoubleBlack(node);
+					node = parent;
 				}
 				else
 				{
-					if (sibling->left->color == RED || sibling->right->color == RED)
+					if (sibling->color == RED)
 					{
-						if (sibling->left->color == RED)
+						parent->color = RED;
+						sibling->color = BLACK;
+						if (sibling == parent->left)
 						{
-							if (sibling == parent->left)
-							{
-								sibling->left->color = sibling->color;
-								sibling->color = parent->color;
-								RotateRight(parent);
-							}
-							else
-							{
-								sibling->left->color = parent->color;
-								RotateRight(sibling);
-								RotateLeft(parent);
-							}
+							RotateRight(parent);
 						}
 						else
 						{
-							if (sibling == parent->left)
-							{
-								sibling->right->color = parent->color;
-								RotateLeft(sibling);
-								RotateRight(parent);
-							}
-							else
-							{
-								sibling->right->color = sibling->color;
-								sibling->color = parent->color;
-								RotateLeft(parent);
-							}
+							RotateLeft(parent);
 						}
-						parent->color = BLACK;
 					}
 					else
 					{
-						sibling->color = RED;
-						if (parent->color == BLACK)
+						if (sibling->left->color == RED || sibling->right->color == RED)
 						{
-							FixDoubleBlack(parent);
+							if (sibling->left->color == RED)
+							{
+								if (sibling == parent->left)
+								{
+									sibling->left->color = BLACK;
+									sibling->color = parent->color;
+									RotateRight(parent);
+								}
+								else
+								{
+									sibling->left->color = parent->color;
+									RotateRight(sibling);
+									RotateLeft(parent);
+								}
+							}
+							else
+							{
+								if (sibling == parent->left)
+								{
+									sibling->right->color = parent->color;
+									RotateLeft(sibling);
+									RotateRight(parent);
+								}
+								else
+								{
+									sibling->right->color = BLACK;
+									sibling->color = parent->color;
+									RotateLeft(parent);
+								}
+							}
+							parent->color = BLACK;
+							return;
 						}
 						else
 						{
-							parent->color = BLACK;
+							sibling->color = RED;
+							if (parent->color == BLACK)
+							{
+								node = parent;
+							}
+							else
+							{
+								parent->color = BLACK;
+								return;
+							}
 						}
 					}
 				}
@@ -367,9 +366,9 @@ namespace __rb_tree
 
 		void Delete(Node *node)
 		{
-			Node *temp = BSTReplace(node), *parent = node->parent, *sibling = Sibling(node);
-			bool doubleblack = temp->color == BLACK && node->color == BLACK;
-			if (temp == null)
+			Node *substitute = BSTReplace(node), *parent = node->parent, *sibling = Sibling(node);
+			bool doubleblack = substitute->color == BLACK && node->color == BLACK;
+			if (substitute == null)
 			{
 				if (node == root)
 				{
@@ -400,37 +399,58 @@ namespace __rb_tree
 			{
 				if (node == root)
 				{
-					node->data = temp->data;
+					node->data = substitute->data;
 					node->left = node->right = null;
-					delete temp;
+					delete substitute;
 				}
 				else
 				{
 					if (node == parent->left)
 					{
-						parent->left = temp;
+						parent->left = substitute;
 					}
 					else
 					{
-						parent->right = temp;
+						parent->right = substitute;
 					}
 					delete node;
-					temp->parent = parent;
+					substitute->parent = parent;
 					if (doubleblack)
 					{
-						FixDoubleBlack(temp);
+						FixDoubleBlack(substitute);
 					}
 					else
 					{
-						temp->color = BLACK;
+						substitute->color = BLACK;
 					}
 				}
 			}
 			else
 			{
-				node->data = temp->data;
-				Delete(temp);
+				node->data = substitute->data;
+				Delete(substitute);
 			}
+		}
+
+		void Delete(size_t pos)
+		{
+			Node *node = root;
+			size_t idx = node->left->size + 1;
+			while (idx != pos)
+			{
+				node->size--;
+				if (pos < idx)
+				{
+					node = node->left;
+				}
+				else
+				{
+					pos -= idx;
+					node = node->right;
+				}
+				idx = node->left->size + 1;
+			}
+			Delete(node);
 		}
 
 		Node *Minimum(Node *node)
@@ -492,6 +512,21 @@ namespace __rb_tree
 			delete node;
 		}
 
+		size_t Index(Node *node)
+		{
+			size_t pos = node->left->size + 1;
+			while (node != root)
+			{
+				Node *parent = node->parent;
+				if (node == parent->right)
+				{
+					pos += parent->left->size + 1;
+				}
+				node = parent;
+			}
+			return pos;
+		}
+
 	public:
 		indexed_red_black_tree()
 		{
@@ -506,34 +541,12 @@ namespace __rb_tree
 
 		void erase(size_t pos)
 		{
-			Node *temp = root;
-			size_t idx = temp->left->size + 1;
-			while (idx != pos)
-			{
-				temp->size--;
-				if (pos < idx)
-				{
-					temp = temp->left;
-				}
-				else
-				{
-					pos -= idx;
-					temp = temp->right;
-				}
-				idx = temp->left->size + 1;
-			}
-			Delete(temp);
+			Delete(pos);
 		}
 
 		void erase(Node *node)
 		{
-			Node *temp = node->parent;
-			while (temp != NULL)
-			{
-				temp->size--;
-				temp = temp->parent;
-			}
-			Delete(node);
+			Delete(Index(node));
 		}
 
 		Node *find(size_t pos)
@@ -564,6 +577,11 @@ namespace __rb_tree
 		size_t size()
 		{
 			return root->size;
+		}
+
+		size_t index(Node *node)
+		{
+			return Index(node);
 		}
 
 		bool empty()
